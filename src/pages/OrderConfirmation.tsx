@@ -1,18 +1,72 @@
 
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { CheckCircle } from 'lucide-react';
+import { Order } from '@/types';
+import { getOrderById } from '@/lib/orderService';
+import { toast } from '@/lib/toast';
 
 const OrderConfirmation = () => {
   const navigate = useNavigate();
-  const orderNumber = `BH-${Math.floor(100000 + Math.random() * 900000)}`;
+  const location = useLocation();
+  const [order, setOrder] = useState<Order | null>(null);
+  const [loading, setLoading] = useState(true);
+  
+  // Get order ID from URL params
+  const queryParams = new URLSearchParams(location.search);
+  const orderId = queryParams.get('id');
   
   useEffect(() => {
-    // This would typically check if an order was actually placed
-    // For now, we'll just allow the page to be viewed
-  }, []);
+    const fetchOrder = async () => {
+      if (!orderId) {
+        toast.error("No order ID provided");
+        navigate('/');
+        return;
+      }
+      
+      try {
+        const orderData = await getOrderById(orderId);
+        if (orderData) {
+          setOrder(orderData);
+        } else {
+          toast.error("Order not found");
+          navigate('/');
+        }
+      } catch (error) {
+        console.error("Error fetching order:", error);
+        toast.error("Failed to load order details");
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchOrder();
+  }, [orderId, navigate]);
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-16 max-w-3xl">
+          <p className="text-center">Loading order details...</p>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!order) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-16 max-w-3xl">
+          <p className="text-center">Order not found</p>
+          <div className="flex justify-center mt-4">
+            <Button onClick={() => navigate('/')}>Return Home</Button>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -28,9 +82,11 @@ const OrderConfirmation = () => {
         <div className="bg-white shadow-sm border rounded-lg p-6 mb-8">
           <div className="flex justify-between items-center border-b pb-4 mb-4">
             <div>
-              <h2 className="text-xl font-semibold">Order #{orderNumber}</h2>
+              <h2 className="text-xl font-semibold">Order #{order.id.substring(0, 8)}...</h2>
               <p className="text-gray-500 text-sm">
-                Placed on {new Date().toLocaleDateString()}
+                Placed on {order.createdAt?.toDate 
+                  ? new Date(order.createdAt.toDate()).toLocaleDateString() 
+                  : new Date().toLocaleDateString()}
               </p>
             </div>
             <Button 
@@ -52,10 +108,7 @@ const OrderConfirmation = () => {
             <div>
               <h3 className="font-medium mb-3">Shipping Address</h3>
               <address className="text-gray-700 not-italic">
-                John Doe<br />
-                123 Main Street<br />
-                Anytown, CA 12345<br />
-                United States
+                {order.deliveryAddress || "No address provided"}
               </address>
             </div>
             
@@ -64,6 +117,22 @@ const OrderConfirmation = () => {
               <p className="text-gray-700">
                 Credit Card (ending in ****1234)
               </p>
+            </div>
+            
+            <div>
+              <h3 className="font-medium mb-3">Order Summary</h3>
+              <div className="space-y-2">
+                {order.books.map((book, index) => (
+                  <div key={index} className="flex justify-between">
+                    <span>{book.title} ({book.rentalDays} days)</span>
+                    <span>${book.totalPrice.toFixed(2)}</span>
+                  </div>
+                ))}
+                <div className="border-t pt-2 font-bold flex justify-between">
+                  <span>Total</span>
+                  <span>${order.totalAmount.toFixed(2)}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

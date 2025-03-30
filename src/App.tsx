@@ -19,6 +19,7 @@ import MyRentals from "./pages/MyRentals";
 import Profile from "./pages/Profile";
 import Search from "./pages/Search";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import OrdersManagement from "./pages/admin/OrdersManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -48,6 +49,7 @@ const App = () => (
               
               {/* Admin Routes */}
               <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/orders" element={<OrdersManagement />} />
               
               {/* Catch-all route */}
               <Route path="*" element={<NotFound />} />

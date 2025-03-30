@@ -3,264 +3,217 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
 import { useAuth } from '../context/AuthContext';
+import { getUserOrders, getDownloadableBooks } from '../lib/orderService';
+import { Order, RentedBook } from '../types';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import { 
-  ShoppingBag, 
-  Package, 
-  CalendarClock, 
-  CheckCircle2, 
-  XCircle 
-} from 'lucide-react';
-
-// Simulated rental orders data
-const dummyOrders = [
-  {
-    id: 'ORD001',
-    status: 'pending',
-    books: [
-      {
-        id: 'book1',
-        title: 'The Great Gatsby',
-        author: 'F. Scott Fitzgerald',
-        cover: 'https://covers.openlibrary.org/b/id/8424385-M.jpg',
-        rentalDays: 14,
-      },
-      {
-        id: 'book2',
-        title: '1984',
-        author: 'George Orwell',
-        cover: 'https://covers.openlibrary.org/b/id/8575111-M.jpg',
-        rentalDays: 7,
-      }
-    ],
-    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-    totalAmount: 42.50,
-  },
-  {
-    id: 'ORD002',
-    status: 'delivered',
-    books: [
-      {
-        id: 'book3',
-        title: 'To Kill a Mockingbird',
-        author: 'Harper Lee',
-        cover: 'https://covers.openlibrary.org/b/id/12000150-M.jpg',
-        rentalDays: 21,
-      }
-    ],
-    createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
-    totalAmount: 28.75,
-    deliveredAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000),
-    returnDue: new Date(Date.now() + 11 * 24 * 60 * 60 * 1000),
-  },
-  {
-    id: 'ORD003',
-    status: 'returned',
-    books: [
-      {
-        id: 'book4',
-        title: 'The Hobbit',
-        author: 'J.R.R. Tolkien',
-        cover: 'https://covers.openlibrary.org/b/id/12003830-M.jpg',
-        rentalDays: 14,
-      },
-      {
-        id: 'book5',
-        title: 'Pride and Prejudice',
-        author: 'Jane Austen',
-        cover: 'https://covers.openlibrary.org/b/id/12547271-M.jpg',
-        rentalDays: 14,
-      }
-    ],
-    createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-    totalAmount: 35.20,
-    deliveredAt: new Date(Date.now() - 28 * 24 * 60 * 60 * 1000),
-    returnedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
-  },
-  {
-    id: 'ORD004',
-    status: 'cancelled',
-    books: [
-      {
-        id: 'book6',
-        title: 'The Catcher in the Rye',
-        author: 'J.D. Salinger',
-        cover: 'https://covers.openlibrary.org/b/id/6853974-M.jpg',
-        rentalDays: 7,
-      }
-    ],
-    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-    totalAmount: 15.99,
-    cancelledAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
-  }
-];
+import { ShoppingCart, Package, Calendar, Clock } from 'lucide-react';
+import { toast } from '../lib/toast';
+import DownloadableBooks from '../components/books/DownloadableBooks';
 
 const MyRentals = () => {
   const navigate = useNavigate();
-  const { currentUser } = useAuth();
-  const [activeTab, setActiveTab] = useState('all');
-  const [orders, setOrders] = useState([...dummyOrders]);
-  const [loading, setLoading] = useState(true);
+  const { currentUser, loading } = useAuth();
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [downloadableBooks, setDownloadableBooks] = useState<RentedBook[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // This would typically fetch the user's orders from the database
-    if (!currentUser) {
-      navigate('/login');
-      return;
+    const fetchUserOrders = async () => {
+      if (!currentUser) return;
+      
+      try {
+        setIsLoading(true);
+        const userOrders = await getUserOrders(currentUser.uid);
+        setOrders(userOrders);
+        
+        // Fetch downloadable books
+        const dlBooks = await getDownloadableBooks(currentUser.uid);
+        setDownloadableBooks(dlBooks);
+      } catch (error) {
+        console.error("Error fetching orders:", error);
+        toast.error("Failed to load your orders");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (!loading) {
+      if (!currentUser) {
+        navigate('/login');
+      } else {
+        fetchUserOrders();
+      }
+    }
+  }, [currentUser, loading, navigate]);
+
+  const getStatusBadgeClass = (status: Order['status']) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-amber-100 text-amber-800';
+      case 'confirmed':
+        return 'bg-blue-100 text-blue-800';
+      case 'delivered':
+        return 'bg-green-100 text-green-800';
+      case 'returned':
+        return 'bg-purple-100 text-purple-800';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const formatDate = (date: any) => {
+    if (!date) return 'N/A';
+    
+    if (date.toDate) {
+      // Firebase Timestamp
+      return new Date(date.toDate()).toLocaleDateString();
     }
     
-    // Simulate API call
-    setTimeout(() => {
-      setOrders([...dummyOrders]);
-      setLoading(false);
-    }, 1000);
-  }, [currentUser, navigate]);
-
-  const getFilteredOrders = () => {
-    if (activeTab === 'all') return orders;
-    return orders.filter(order => order.status === activeTab);
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return <ShoppingBag className="text-amber-500" />;
-      case 'delivered':
-        return <Package className="text-green-500" />;
-      case 'returned':
-        return <CheckCircle2 className="text-blue-500" />;
-      case 'cancelled':
-        return <XCircle className="text-red-500" />;
-      default:
-        return <ShoppingBag className="text-gray-500" />;
+    if (date instanceof Date) {
+      return date.toLocaleDateString();
     }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'Processing';
-      case 'delivered':
-        return 'Active Rental';
-      case 'returned':
-        return 'Returned';
-      case 'cancelled':
-        return 'Cancelled';
-      default:
-        return status;
-    }
+    
+    return new Date(date).toLocaleDateString();
   };
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-12">
-        <h1 className="text-2xl font-bold mb-6">My Rentals</h1>
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-6">My Rentals</h1>
         
-        <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-8">
-            <TabsTrigger value="all">All Orders</TabsTrigger>
-            <TabsTrigger value="pending">Processing</TabsTrigger>
-            <TabsTrigger value="delivered">Active Rentals</TabsTrigger>
-            <TabsTrigger value="returned">Returned</TabsTrigger>
-            <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value={activeTab} className="space-y-6">
-            {loading ? (
-              <p className="text-center py-12">Loading your orders...</p>
-            ) : getFilteredOrders().length === 0 ? (
-              <div className="text-center py-12">
-                <ShoppingBag className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                <h2 className="text-xl font-semibold mb-2">No orders found</h2>
-                <p className="text-gray-600 mb-6">
-                  {activeTab === 'all' 
-                    ? "You haven't placed any orders yet." 
-                    : `You don't have any ${activeTab} orders.`}
-                </p>
-                <Button onClick={() => navigate('/books')}>
-                  Browse Books
-                </Button>
-              </div>
-            ) : (
-              getFilteredOrders().map((order) => (
-                <Card key={order.id} className="overflow-hidden">
-                  <CardHeader className="bg-gray-50">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                      <div>
-                        <CardTitle className="text-lg">Order #{order.id}</CardTitle>
-                        <CardDescription>
-                          Placed on {order.createdAt.toLocaleDateString()}
-                        </CardDescription>
-                      </div>
-                      <div className="flex items-center mt-2 sm:mt-0">
-                        {getStatusIcon(order.status)}
-                        <span className="ml-2 font-medium">
-                          {getStatusText(order.status)}
-                        </span>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-6">
-                    <div className="space-y-4">
-                      {order.books.map((book) => (
-                        <div key={book.id} className="flex">
-                          <div className="h-24 w-16 flex-shrink-0">
-                            <img 
-                              src={book.cover} 
-                              alt={book.title}
-                              className="h-full w-full object-cover"
-                            />
-                          </div>
-                          <div className="ml-4">
-                            <h3 className="font-medium">{book.title}</h3>
-                            <p className="text-sm text-gray-500">{book.author}</p>
-                            <p className="text-sm mt-1">
-                              Rental period: {book.rentalDays} days
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    
-                    {order.status === 'delivered' && (
-                      <div className="mt-6 bg-blue-50 p-4 rounded-md flex items-start">
-                        <CalendarClock className="h-5 w-5 text-blue-500 mt-0.5 mr-2" />
-                        <div>
-                          <p className="text-sm font-medium">Return by {order.returnDue.toLocaleDateString()}</p>
-                          <p className="text-xs text-gray-600">
-                            Please return your books by the due date to avoid additional charges
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                  <CardFooter className="border-t bg-gray-50 flex justify-between">
-                    <div>
-                      <p className="text-sm font-medium">Total: ${order.totalAmount.toFixed(2)}</p>
-                    </div>
-                    <Button variant="outline" size="sm">
-                      View Details
+        {isLoading ? (
+          <div className="flex justify-center items-center py-16">
+            <p className="text-lg text-gray-600">Loading your orders...</p>
+          </div>
+        ) : (
+          <>
+            {/* Downloadable Books Section */}
+            <DownloadableBooks books={downloadableBooks} />
+            
+            {/* Order History */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Order History</CardTitle>
+                <CardDescription>
+                  View all your past and current book rentals
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {orders.length === 0 ? (
+                  <div className="text-center py-8">
+                    <ShoppingCart className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                    <h3 className="text-lg font-medium mb-2">No orders yet</h3>
+                    <p className="text-gray-500 mb-4">You haven't rented any books yet</p>
+                    <Button onClick={() => navigate('/books')}>
+                      Browse Books
                     </Button>
-                  </CardFooter>
-                </Card>
-              ))
-            )}
-          </TabsContent>
-        </Tabs>
+                  </div>
+                ) : (
+                  <Accordion type="single" collapsible className="w-full">
+                    {orders.map((order, index) => (
+                      <AccordionItem key={order.id} value={order.id}>
+                        <AccordionTrigger className="hover:no-underline">
+                          <div className="flex flex-col sm:flex-row justify-between w-full items-start sm:items-center gap-2">
+                            <div className="flex items-center">
+                              <div className="mr-4">
+                                <Package className="h-8 w-8 text-gray-400" />
+                              </div>
+                              <div>
+                                <p className="font-medium">Order #{order.id.substring(0, 8)}...</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {formatDate(order.createdAt)}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <span className={`px-2 py-1 rounded-full text-xs ${getStatusBadgeClass(order.status)}`}>
+                                {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                              </span>
+                              <span className="font-medium">
+                                ${order.totalAmount.toFixed(2)}
+                              </span>
+                            </div>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          <div className="pl-12 space-y-4">
+                            <div className="grid gap-4">
+                              <div className="flex items-center gap-2 text-sm">
+                                <Calendar className="h-4 w-4" />
+                                <span>Return Date: {formatDate(order.returnDate)}</span>
+                              </div>
+                              
+                              <div className="flex items-center gap-2 text-sm">
+                                <Clock className="h-4 w-4" />
+                                <span>
+                                  Status: 
+                                  <span className={`ml-2 px-2 py-1 rounded-full text-xs ${getStatusBadgeClass(order.status)}`}>
+                                    {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                                  </span>
+                                </span>
+                              </div>
+                            </div>
+                            
+                            <div className="mt-4">
+                              <h4 className="font-medium mb-2">Books in this order</h4>
+                              <div className="grid gap-3">
+                                {order.books.map((book, idx) => (
+                                  <div key={idx} className="flex justify-between items-center border-b pb-2">
+                                    <div className="flex items-center gap-3">
+                                      <img 
+                                        src={book.coverImage || "/placeholder.svg"} 
+                                        alt={book.title} 
+                                        className="w-10 h-14 object-cover rounded"
+                                      />
+                                      <div>
+                                        <p className="font-medium">{book.title}</p>
+                                        <p className="text-sm text-muted-foreground">{book.author}</p>
+                                      </div>
+                                    </div>
+                                    <div className="text-right">
+                                      <p className="font-medium">${book.totalPrice.toFixed(2)}</p>
+                                      <p className="text-xs text-muted-foreground">
+                                        {book.rentalDays} days @ ${book.price.toFixed(2)}/day
+                                      </p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                            
+                            <div className="mt-4 flex justify-between items-center">
+                              <div>
+                                <p className="text-sm text-muted-foreground">
+                                  Delivery Address:
+                                </p>
+                                <p className="text-sm">
+                                  {order.deliveryAddress || "No delivery address provided"}
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-sm text-muted-foreground">Total</p>
+                                <p className="font-bold">${order.totalAmount.toFixed(2)}</p>
+                              </div>
+                            </div>
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
+                )}
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
     </Layout>
   );

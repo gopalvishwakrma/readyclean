@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { auth, db, onAuthStateChanged, doc, getDoc } from "../lib/firebase";
 import { User as FirebaseUser } from "firebase/auth";
@@ -62,7 +63,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <AuthContext.Provider value={{ 
       currentUser, 
       loading, 
-      isAdmin: currentUser?.role === "admin" || currentUser?.email === "admin@bookhaven.com" 
+      isAdmin: currentUser?.role === "admin" || currentUser?.email === "admin@bookhaven.com" && currentUser?.email === "admin@bookhaven.com"
     }}>
       {children}
     </AuthContext.Provider>

@@ -4,12 +4,12 @@ import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, si
 import { getFirestore, collection, doc, setDoc, getDoc, getDocs, updateDoc, query, where, deleteDoc, addDoc, serverTimestamp } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAeqmmQPi4dyVA3yA7Gpxewa_OHXewUYpU",
-  authDomain: "bookhaven-rental.firebaseapp.com",
-  projectId: "bookhaven-rental",
-  storageBucket: "bookhaven-rental.appspot.com",
-  messagingSenderId: "484489397624",
-  appId: "1:484489397624:web:9bfd2a5b99e909c5b7432c"
+  apiKey: "AIzaSyBPrd0HT20eM6ceZnE17nI2jUDamKyHn2s",
+  authDomain: "codeglimpse-650e6.firebaseapp.com",
+  projectId: "codeglimpse-650e6",
+  storageBucket: "codeglimpse-650e6.firebasestorage.app",
+  messagingSenderId: "169349614802",
+  appId: "1:169349614802:web:e5a3c9c994fe0a641bb10b"
 };
 
 // Initialize Firebase

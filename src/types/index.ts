@@ -33,6 +33,7 @@ export interface RentedBook {
   price: number;
   rentalDays: number;
   totalPrice: number;
+  orderId?: string; // Added optional orderId property
 }
 
 export interface CartItem {

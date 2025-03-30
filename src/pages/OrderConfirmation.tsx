@@ -1,8 +1,9 @@
+
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
 import { Button } from '@/components/ui/button';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, AlertCircle } from 'lucide-react';
 import { Order } from '@/types';
 import { getOrderById } from '@/lib/orderService';
 import { toast } from '@/lib/toast';
@@ -12,6 +13,7 @@ const OrderConfirmation = () => {
   const location = useLocation();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   // Get order ID from URL params
   const queryParams = new URLSearchParams(location.search);
@@ -21,11 +23,9 @@ const OrderConfirmation = () => {
     const fetchOrder = async () => {
       if (!orderId) {
         console.error("No order ID provided in URL parameters");
+        setError("Order information not found");
         toast.error("Order information not found");
-        // Wait a moment before redirecting so the user can see the toast
-        setTimeout(() => {
-          navigate('/my-rentals');
-        }, 2000);
+        setLoading(false);
         return;
       }
       
@@ -37,14 +37,12 @@ const OrderConfirmation = () => {
           setOrder(orderData);
         } else {
           console.error("Order not found with ID:", orderId);
+          setError("Order not found");
           toast.error("Order not found");
-          // Wait a moment before redirecting
-          setTimeout(() => {
-            navigate('/my-rentals');
-          }, 2000);
         }
       } catch (error) {
         console.error("Error fetching order:", error);
+        setError("Failed to load order details");
         toast.error("Failed to load order details");
       } finally {
         setLoading(false);
@@ -52,7 +50,7 @@ const OrderConfirmation = () => {
     };
     
     fetchOrder();
-  }, [orderId, navigate]);
+  }, [orderId]);
 
   if (loading) {
     return (
@@ -66,13 +64,15 @@ const OrderConfirmation = () => {
     );
   }
 
-  if (!order) {
+  if (error || !order) {
     return (
       <Layout>
         <div className="container mx-auto px-4 py-16 max-w-3xl">
           <div className="text-center">
-            <p className="text-lg text-red-500">Order information not found</p>
-            <div className="flex justify-center mt-4">
+            <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+            <p className="text-lg text-red-500">{error || "Order information not found"}</p>
+            <div className="flex justify-center mt-4 gap-4">
+              <Button onClick={() => navigate('/cart')}>Return to Cart</Button>
               <Button onClick={() => navigate('/my-rentals')}>View My Rentals</Button>
             </div>
           </div>

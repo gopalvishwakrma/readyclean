@@ -45,6 +45,7 @@ const Cart = () => {
     cvv: '',
   });
   const [isProcessing, setIsProcessing] = useState(false);
+  const [processingError, setProcessingError] = useState<string | null>(null);
 
   const handleShippingInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setShippingInfo({
@@ -89,6 +90,9 @@ const Cart = () => {
     
     try {
       setIsProcessing(true);
+      setProcessingError(null);
+      
+      console.log("Starting order creation process...");
       
       // Format delivery address
       const formattedAddress = `${shippingInfo.fullName}, ${shippingInfo.address}, ${shippingInfo.city}, ${shippingInfo.state} ${shippingInfo.zipCode}, ${shippingInfo.country}`;
@@ -101,8 +105,10 @@ const Cart = () => {
         coverImage: item.book.imageLinks?.thumbnail || '/placeholder.svg',
         price: item.book.price,
         rentalDays: item.rentalDays,
-        totalPrice: (item.book.price * item.rentalDays / 7)
+        totalPrice: item.book.price * item.rentalDays / 7
       }));
+      
+      console.log("Rental books formatted:", rentedBooks);
       
       // Create order in Firebase
       const orderId = await createOrder(
@@ -114,16 +120,22 @@ const Cart = () => {
         formattedAddress
       );
       
+      console.log("Order creation result:", orderId);
+      
       if (orderId) {
+        console.log("Order placed successfully with ID:", orderId);
         toast.success('Order placed successfully!');
         clearCart();
         // Redirect to order confirmation with order ID
         navigate(`/order-confirmation?id=${orderId}`);
       } else {
+        console.error("Failed to create order - no order ID returned");
+        setProcessingError("Failed to create your order. Please try again.");
         toast.error('Failed to create order');
       }
     } catch (error) {
       console.error("Error processing payment:", error);
+      setProcessingError("Payment processing failed. Please try again.");
       toast.error('Payment processing failed');
     } finally {
       setIsProcessing(false);
@@ -472,6 +484,12 @@ const Cart = () => {
                         />
                       </div>
                     </div>
+                    
+                    {processingError && (
+                      <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded">
+                        {processingError}
+                      </div>
+                    )}
                     
                     <div className="flex items-center mt-2">
                       <CreditCard className="h-5 w-5 text-gray-400 mr-2" />

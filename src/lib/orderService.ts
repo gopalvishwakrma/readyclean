@@ -85,10 +85,13 @@ export const createOrder = async (
   deliveryAddress: string
 ): Promise<string | null> => {
   try {
-    console.log("Creating new order...");
-    console.log("User:", userId, userEmail, userName);
-    console.log("Books:", books);
-    console.log("Total:", totalAmount);
+    console.log("Creating new order with the following details:");
+    console.log("User ID:", userId);
+    console.log("User Email:", userEmail);
+    console.log("User Name:", userName);
+    console.log("Books:", JSON.stringify(books));
+    console.log("Total Amount:", totalAmount);
+    console.log("Delivery Address:", deliveryAddress);
     
     const orderData = {
       userId,
@@ -103,7 +106,14 @@ export const createOrder = async (
       returnDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // Default 30 days return date
     };
     
+    // Ensure we're getting a valid reference from addDoc
     const orderRef = await addDoc(collection(db, "orders"), orderData);
+    
+    if (!orderRef || !orderRef.id) {
+      console.error("Failed to get order ID from Firebase");
+      throw new Error("Failed to create order");
+    }
+    
     console.log("Order created with ID:", orderRef.id);
     toast.success("Order placed successfully!");
     return orderRef.id;

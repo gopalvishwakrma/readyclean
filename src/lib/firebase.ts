@@ -17,6 +17,11 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// Enable logging in development
+if (process.env.NODE_ENV !== 'production') {
+  console.log('Firebase initialized with config:', firebaseConfig);
+}
+
 export { 
   auth, 
   db, 

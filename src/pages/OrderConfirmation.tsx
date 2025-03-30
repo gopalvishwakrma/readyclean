@@ -7,10 +7,12 @@ import { CheckCircle, AlertCircle } from 'lucide-react';
 import { Order } from '@/types';
 import { getOrderById } from '@/lib/orderService';
 import { toast } from '@/lib/toast';
+import { useAuth } from '@/context/AuthContext';
 
 const OrderConfirmation = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { currentUser } = useAuth();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -21,6 +23,13 @@ const OrderConfirmation = () => {
   
   useEffect(() => {
     const fetchOrder = async () => {
+      if (!currentUser) {
+        console.error("No user is logged in");
+        setError("Please log in to view order details");
+        setLoading(false);
+        return;
+      }
+
       if (!orderId) {
         console.error("No order ID provided in URL parameters");
         setError("Order information not found");
@@ -34,6 +43,16 @@ const OrderConfirmation = () => {
         const orderData = await getOrderById(orderId);
         if (orderData) {
           console.log("Order data retrieved:", orderData);
+          
+          // Verify this order belongs to the current user
+          if (orderData.userId !== currentUser.uid) {
+            console.error("Order does not belong to the current user");
+            setError("You don't have permission to view this order");
+            toast.error("You don't have permission to view this order");
+            setLoading(false);
+            return;
+          }
+          
           setOrder(orderData);
         } else {
           console.error("Order not found with ID:", orderId);
@@ -50,7 +69,7 @@ const OrderConfirmation = () => {
     };
     
     fetchOrder();
-  }, [orderId]);
+  }, [orderId, currentUser, navigate]);
 
   if (loading) {
     return (

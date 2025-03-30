@@ -23,13 +23,17 @@ export const getAllOrders = async (): Promise<Order[]> => {
 // Fetch orders for a specific user
 export const getUserOrders = async (userId: string): Promise<Order[]> => {
   try {
+    console.log("Fetching orders for user:", userId);
     const q = query(collection(db, "orders"), where("userId", "==", userId));
     const snapshot = await getDocs(q);
     
-    return snapshot.docs.map(doc => ({
+    const orders = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     })) as Order[];
+    
+    console.log(`Found ${orders.length} orders for user ${userId}:`, orders);
+    return orders;
   } catch (error) {
     console.error("Error fetching user orders:", error);
     toast.error("Failed to fetch your orders");
@@ -41,6 +45,11 @@ export const getUserOrders = async (userId: string): Promise<Order[]> => {
 export const getOrderById = async (orderId: string): Promise<Order | null> => {
   try {
     console.log("Getting order by ID:", orderId);
+    if (!orderId) {
+      console.error("Invalid order ID provided:", orderId);
+      return null;
+    }
+    
     const orderDoc = await getDoc(doc(db, "orders", orderId));
     
     if (!orderDoc.exists()) {
@@ -93,6 +102,18 @@ export const createOrder = async (
     console.log("Total Amount:", totalAmount);
     console.log("Delivery Address:", deliveryAddress);
     
+    // Validate required fields
+    if (!userId) {
+      console.error("Missing required field: userId");
+      throw new Error("User ID is required");
+    }
+    
+    if (!books || books.length === 0) {
+      console.error("Missing required field: books");
+      throw new Error("No books selected");
+    }
+    
+    // Create the order data
     const orderData = {
       userId,
       userEmail,
@@ -106,8 +127,11 @@ export const createOrder = async (
       returnDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // Default 30 days return date
     };
     
-    // Ensure we're getting a valid reference from addDoc
-    const orderRef = await addDoc(collection(db, "orders"), orderData);
+    console.log("Order data prepared:", orderData);
+    
+    // Add the document to Firestore
+    const ordersCollection = collection(db, "orders");
+    const orderRef = await addDoc(ordersCollection, orderData);
     
     if (!orderRef || !orderRef.id) {
       console.error("Failed to get order ID from Firebase");
@@ -119,7 +143,7 @@ export const createOrder = async (
     return orderRef.id;
   } catch (error) {
     console.error("Error creating order:", error);
-    toast.error("Failed to place order");
+    toast.error(`Failed to place order: ${error instanceof Error ? error.message : 'Unknown error'}`);
     return null;
   }
 };
@@ -127,6 +151,7 @@ export const createOrder = async (
 // Get downloadable books (for completed orders)
 export const getDownloadableBooks = async (userId: string): Promise<RentedBook[]> => {
   try {
+    console.log("Fetching downloadable books for user:", userId);
     const q = query(
       collection(db, "orders"), 
       where("userId", "==", userId),
@@ -134,6 +159,8 @@ export const getDownloadableBooks = async (userId: string): Promise<RentedBook[]
     );
     
     const snapshot = await getDocs(q);
+    console.log(`Found ${snapshot.docs.length} delivered orders for user`);
+    
     const downloadableBooks: RentedBook[] = [];
     
     snapshot.docs.forEach(doc => {
@@ -146,6 +173,7 @@ export const getDownloadableBooks = async (userId: string): Promise<RentedBook[]
       });
     });
     
+    console.log(`Total downloadable books: ${downloadableBooks.length}`);
     return downloadableBooks;
   } catch (error) {
     console.error("Error fetching downloadable books:", error);

@@ -1,8 +1,7 @@
-
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { auth, db, onAuthStateChanged, doc, getDoc } from "../lib/firebase";
 import { User as FirebaseUser } from "firebase/auth";
-import { toast } from "../components/ui/sonner";
+import { toast } from "../lib/toast";
 
 interface User extends FirebaseUser {
   role?: "user" | "admin";

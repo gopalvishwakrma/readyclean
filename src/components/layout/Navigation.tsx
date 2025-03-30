@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -23,7 +22,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { auth, signOut } from '../../lib/firebase';
-import { toast } from '../../components/ui/sonner';
+import { toast } from '../../lib/toast';
 
 const Navigation = () => {
   const { currentUser, isAdmin } = useAuth();
@@ -32,7 +31,6 @@ const Navigation = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Close mobile menu when navigating
   useEffect(() => {
     setIsMenuOpen(false);
   }, [navigate]);
@@ -60,13 +58,11 @@ const Navigation = () => {
     <header className="sticky top-0 z-50 w-full bg-white shadow-sm border-b">
       <nav className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
             <BookOpen className="h-6 w-6 text-bookhaven-600" />
             <span className="text-xl font-bold text-bookhaven-600">BookHaven</span>
           </Link>
 
-          {/* Search - hidden on mobile */}
           <div className="hidden md:flex max-w-md w-full mx-4">
             <form onSubmit={handleSearch} className="flex w-full">
               <Input
@@ -82,7 +78,6 @@ const Navigation = () => {
             </form>
           </div>
 
-          {/* Navigation Items - Desktop */}
           <div className="hidden md:flex items-center space-x-4">
             <Link to="/books" className="text-gray-600 hover:text-bookhaven-600">
               Books
@@ -145,7 +140,6 @@ const Navigation = () => {
             )}
           </div>
 
-          {/* Mobile Menu Button */}
           <div className="md:hidden flex items-center">
             <Link to="/cart" className="relative mr-2">
               <Button variant="ghost" size="icon">
@@ -171,7 +165,6 @@ const Navigation = () => {
           </div>
         </div>
 
-        {/* Mobile Menu & Search */}
         {isMenuOpen && (
           <div className="md:hidden pt-4 pb-3 space-y-4 fade-in">
             <form onSubmit={handleSearch} className="flex w-full">

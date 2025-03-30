@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -14,7 +13,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { auth, signOut } from '../../lib/firebase';
-import { toast } from '../../components/ui/sonner';
+import { toast } from '../../lib/toast';
 import {
   Sidebar,
   SidebarContent,
@@ -76,9 +75,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 <SidebarMenuItem key={item.path}>
                   <SidebarMenuButton 
                     asChild
-                    active={isActive(item.path)}
                   >
-                    <Link to={item.path} className="flex items-center">
+                    <Link 
+                      to={item.path} 
+                      className={`flex items-center ${isActive(item.path) ? 'text-bookhaven-600 font-medium' : ''}`}
+                    >
                       <item.icon className="h-5 w-5 mr-3" />
                       <span>{item.label}</span>
                     </Link>

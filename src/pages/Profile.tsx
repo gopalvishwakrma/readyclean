@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
 import { useAuth } from '../context/AuthContext';
 import { db, doc, getDoc, updateDoc } from '../lib/firebase';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/lib/toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';

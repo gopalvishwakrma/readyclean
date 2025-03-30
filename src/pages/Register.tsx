@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { auth, createUserWithEmailAndPassword, db, doc, setDoc, serverTimestamp } from '../lib/firebase';
-import { toast } from '../components/ui/sonner';
+import { toast } from '../lib/toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';

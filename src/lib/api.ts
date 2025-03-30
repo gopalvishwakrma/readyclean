@@ -1,5 +1,4 @@
-
-import { toast } from "../components/ui/sonner";
+import { toast } from "./toast";
 
 export interface Book {
   id: string;

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
@@ -23,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Trash2, ShoppingBag, CreditCard } from 'lucide-react';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/lib/toast';
 
 const Cart = () => {
   const navigate = useNavigate();

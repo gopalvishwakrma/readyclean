@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Trash2, ShoppingBag, CreditCard } from 'lucide-react';
 import { toast } from '@/lib/toast';
+import { createOrder } from '@/lib/orderService';
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -43,6 +44,7 @@ const Cart = () => {
     expiryDate: '',
     cvv: '',
   });
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleShippingInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setShippingInfo({
@@ -70,7 +72,7 @@ const Cart = () => {
     setCheckoutStep('payment');
   };
 
-  const handlePaymentSubmit = (e: React.FormEvent) => {
+  const handlePaymentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!paymentInfo.cardName || !paymentInfo.cardNumber || 
@@ -78,11 +80,54 @@ const Cart = () => {
       toast.error('Please fill in all payment details');
       return;
     }
+
+    if (!currentUser) {
+      toast.error('Please login to complete your purchase');
+      navigate('/login');
+      return;
+    }
     
-    // Process payment and create order (dummy)
-    toast.success('Order placed successfully!');
-    clearCart();
-    navigate('/order-confirmation');
+    try {
+      setIsProcessing(true);
+      
+      // Format delivery address
+      const formattedAddress = `${shippingInfo.fullName}, ${shippingInfo.address}, ${shippingInfo.city}, ${shippingInfo.state} ${shippingInfo.zipCode}, ${shippingInfo.country}`;
+      
+      // Convert cart items to rented books
+      const rentedBooks = items.map(item => ({
+        bookId: item.book.id,
+        title: item.book.title,
+        author: item.book.authors ? item.book.authors.join(', ') : 'Unknown Author',
+        coverImage: item.book.imageLinks?.thumbnail || '/placeholder.svg',
+        price: item.book.price,
+        rentalDays: item.rentalDays,
+        totalPrice: (item.book.price * item.rentalDays / 7)
+      }));
+      
+      // Create order in Firebase
+      const orderId = await createOrder(
+        currentUser.uid,
+        currentUser.email || '',
+        shippingInfo.fullName,
+        rentedBooks,
+        totalAmount,
+        formattedAddress
+      );
+      
+      if (orderId) {
+        toast.success('Order placed successfully!');
+        clearCart();
+        // Redirect to order confirmation with order ID
+        navigate(`/order-confirmation?id=${orderId}`);
+      } else {
+        toast.error('Failed to create order');
+      }
+    } catch (error) {
+      console.error("Error processing payment:", error);
+      toast.error('Payment processing failed');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleProceedToCheckout = () => {
@@ -440,11 +485,12 @@ const Cart = () => {
                         type="button" 
                         variant="outline"
                         onClick={() => setCheckoutStep('shipping')}
+                        disabled={isProcessing}
                       >
                         Back to Shipping
                       </Button>
-                      <Button type="submit">
-                        Place Order
+                      <Button type="submit" disabled={isProcessing}>
+                        {isProcessing ? 'Processing...' : 'Place Order'}
                       </Button>
                     </div>
                   </form>

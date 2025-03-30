@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
@@ -21,18 +20,28 @@ const OrderConfirmation = () => {
   useEffect(() => {
     const fetchOrder = async () => {
       if (!orderId) {
-        toast.error("No order ID provided");
-        navigate('/');
+        console.error("No order ID provided in URL parameters");
+        toast.error("Order information not found");
+        // Wait a moment before redirecting so the user can see the toast
+        setTimeout(() => {
+          navigate('/my-rentals');
+        }, 2000);
         return;
       }
       
       try {
+        console.log("Fetching order with ID:", orderId);
         const orderData = await getOrderById(orderId);
         if (orderData) {
+          console.log("Order data retrieved:", orderData);
           setOrder(orderData);
         } else {
+          console.error("Order not found with ID:", orderId);
           toast.error("Order not found");
-          navigate('/');
+          // Wait a moment before redirecting
+          setTimeout(() => {
+            navigate('/my-rentals');
+          }, 2000);
         }
       } catch (error) {
         console.error("Error fetching order:", error);
@@ -49,7 +58,9 @@ const OrderConfirmation = () => {
     return (
       <Layout>
         <div className="container mx-auto px-4 py-16 max-w-3xl">
-          <p className="text-center">Loading order details...</p>
+          <div className="text-center">
+            <p className="text-lg">Loading order details...</p>
+          </div>
         </div>
       </Layout>
     );
@@ -59,9 +70,11 @@ const OrderConfirmation = () => {
     return (
       <Layout>
         <div className="container mx-auto px-4 py-16 max-w-3xl">
-          <p className="text-center">Order not found</p>
-          <div className="flex justify-center mt-4">
-            <Button onClick={() => navigate('/')}>Return Home</Button>
+          <div className="text-center">
+            <p className="text-lg text-red-500">Order information not found</p>
+            <div className="flex justify-center mt-4">
+              <Button onClick={() => navigate('/my-rentals')}>View My Rentals</Button>
+            </div>
           </div>
         </div>
       </Layout>
@@ -146,7 +159,7 @@ const OrderConfirmation = () => {
           <div className="flex justify-center space-x-4">
             <Button 
               variant="outline" 
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/books')}
             >
               Continue Shopping
             </Button>

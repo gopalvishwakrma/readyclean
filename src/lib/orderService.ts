@@ -40,14 +40,17 @@ export const getUserOrders = async (userId: string): Promise<Order[]> => {
 // Get a specific order by ID
 export const getOrderById = async (orderId: string): Promise<Order | null> => {
   try {
+    console.log("Getting order by ID:", orderId);
     const orderDoc = await getDoc(doc(db, "orders", orderId));
     
     if (!orderDoc.exists()) {
-      toast.error("Order not found");
+      console.log("Order not found with ID:", orderId);
       return null;
     }
     
-    return { id: orderDoc.id, ...orderDoc.data() } as Order;
+    const orderData = { id: orderDoc.id, ...orderDoc.data() } as Order;
+    console.log("Order data retrieved:", orderData);
+    return orderData;
   } catch (error) {
     console.error("Error fetching order:", error);
     toast.error("Failed to fetch order details");
@@ -82,6 +85,11 @@ export const createOrder = async (
   deliveryAddress: string
 ): Promise<string | null> => {
   try {
+    console.log("Creating new order...");
+    console.log("User:", userId, userEmail, userName);
+    console.log("Books:", books);
+    console.log("Total:", totalAmount);
+    
     const orderData = {
       userId,
       userEmail,
@@ -96,6 +104,7 @@ export const createOrder = async (
     };
     
     const orderRef = await addDoc(collection(db, "orders"), orderData);
+    console.log("Order created with ID:", orderRef.id);
     toast.success("Order placed successfully!");
     return orderRef.id;
   } catch (error) {

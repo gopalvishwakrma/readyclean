@@ -36,7 +36,7 @@ export {
   signInWithEmailAndPassword, 
   signOut, 
   onAuthStateChanged,
-  sendPasswordResetEmail,
+  sendPasswordResetEmail, // Ensure this is exported
   collection,
   doc,
   getDoc,

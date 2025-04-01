@@ -1,3 +1,4 @@
+
 import { db, collection, doc, getDoc, getDocs, updateDoc, query, where, addDoc, serverTimestamp } from "./firebase";
 import { Order, RentedBook } from "../types";
 import { toast } from "./toast";
@@ -130,7 +131,8 @@ export const createOrder = async (
       paymentStatus: "completed",
       createdAt: serverTimestamp(),
       returnDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // Default 30 days return date
-      paymentDetails: paymentDetails || null
+      paymentDetails: paymentDetails || null,
+      currency: "INR" // Add currency field set to INR
     };
     
     console.log("Order data prepared:", orderData);
@@ -148,7 +150,7 @@ export const createOrder = async (
     toast.success("Order placed successfully!");
     return orderRef.id;
   } catch (error) {
-    console.error("Error creating order:", error);
+    console.error("Error creating order:", error instanceof Error ? error.message : String(error));
     toast.error(`Failed to place order: ${error instanceof Error ? error.message : 'Unknown error'}`);
     return null;
   }

@@ -38,9 +38,9 @@ export const initiateRazorpayPayment = (
   onFailure: (error: any) => void
 ): void => {
   const options = {
-    key: "rzp_test_y2F84038a9FYwq", // Your Razorpay Key ID
+    key: "rzp_test_y2F84038a9FYwq", // Using the provided test key
     amount: amount * 100, // Amount in smallest currency unit (paise for INR)
-    currency: "USD",
+    currency: "INR",      // Changed to INR from USD
     name: "BookHaven",
     description: "Book Rental Payment",
     image: "/placeholder.svg", // Your logo

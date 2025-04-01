@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
 
@@ -32,31 +32,29 @@ const App = () => (
         <CartProvider>
           <Toaster />
           <Sonner />
-          <BrowserRouter>
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={<Index />} />
-              <Route path="/books" element={<BooksList />} />
-              <Route path="/book/:id" element={<BookDetail />} />
-              <Route path="/search" element={<Search />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/cart" element={<Cart />} />
-              
-              {/* User Routes */}
-              <Route path="/order-confirmation" element={<OrderConfirmation />} />
-              <Route path="/my-rentals" element={<MyRentals />} />
-              <Route path="/profile" element={<Profile />} />
-              
-              {/* Admin Routes */}
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/orders" element={<OrdersManagement />} />
-              
-              {/* Catch-all route */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Index />} />
+            <Route path="/books" element={<BooksList />} />
+            <Route path="/book/:id" element={<BookDetail />} />
+            <Route path="/search" element={<Search />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/cart" element={<Cart />} />
+            
+            {/* User Routes */}
+            <Route path="/order-confirmation" element={<OrderConfirmation />} />
+            <Route path="/my-rentals" element={<MyRentals />} />
+            <Route path="/profile" element={<Profile />} />
+            
+            {/* Admin Routes */}
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/orders" element={<OrdersManagement />} />
+            
+            {/* Catch-all route */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
         </CartProvider>
       </AuthProvider>
     </TooltipProvider>

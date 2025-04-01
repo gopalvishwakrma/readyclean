@@ -1,4 +1,3 @@
-
 import { db, collection, doc, getDoc, getDocs, updateDoc, query, where, addDoc, serverTimestamp } from "./firebase";
 import { Order, RentedBook } from "../types";
 import { toast } from "./toast";
@@ -91,7 +90,12 @@ export const createOrder = async (
   userName: string,
   books: RentedBook[],
   totalAmount: number,
-  deliveryAddress: string
+  deliveryAddress: string,
+  paymentDetails?: {
+    paymentId: string;
+    orderId: string;
+    signature: string;
+  }
 ): Promise<string | null> => {
   try {
     console.log("Creating new order with the following details:");
@@ -101,6 +105,7 @@ export const createOrder = async (
     console.log("Books:", JSON.stringify(books));
     console.log("Total Amount:", totalAmount);
     console.log("Delivery Address:", deliveryAddress);
+    console.log("Payment Details:", paymentDetails);
     
     // Validate required fields
     if (!userId) {
@@ -124,7 +129,8 @@ export const createOrder = async (
       deliveryAddress,
       paymentStatus: "completed",
       createdAt: serverTimestamp(),
-      returnDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // Default 30 days return date
+      returnDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // Default 30 days return date
+      paymentDetails: paymentDetails || null
     };
     
     console.log("Order data prepared:", orderData);

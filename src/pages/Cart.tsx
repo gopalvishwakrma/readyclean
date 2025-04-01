@@ -24,6 +24,8 @@ import {
 import { Trash2, ShoppingBag, CreditCard } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { createOrder } from '@/lib/orderService';
+import { loadRazorpayScript, initiateRazorpayPayment } from '@/lib/paymentService';
+import { v4 as uuidv4 } from 'uuid';
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -110,34 +112,61 @@ const Cart = () => {
       
       console.log("Rental books formatted:", rentedBooks);
       
-      // Create order in Firebase
-      const orderId = await createOrder(
-        currentUser.uid,
+      // Generate a client-side order ID
+      const clientOrderId = uuidv4();
+      
+      // Load Razorpay script
+      const scriptLoaded = await loadRazorpayScript();
+      
+      if (!scriptLoaded) {
+        throw new Error("Failed to load payment gateway");
+      }
+      
+      // Initialize Razorpay payment
+      initiateRazorpayPayment(
+        clientOrderId,
+        totalAmount,
         currentUser.email || '',
         shippingInfo.fullName,
-        rentedBooks,
-        totalAmount,
-        formattedAddress
+        async (paymentId, orderId, signature) => {
+          console.log("Payment successful, creating order in database");
+          // After successful payment, create order in database
+          const firestoreOrderId = await createOrder(
+            currentUser.uid,
+            currentUser.email || '',
+            shippingInfo.fullName,
+            rentedBooks,
+            totalAmount,
+            formattedAddress,
+            {
+              paymentId,
+              orderId,
+              signature
+            }
+          );
+          
+          if (firestoreOrderId) {
+            console.log("Order created successfully with ID:", firestoreOrderId);
+            toast.success('Order placed successfully!');
+            clearCart();
+            navigate(`/order-confirmation?id=${firestoreOrderId}`);
+          } else {
+            console.error("Failed to create order in database");
+            setProcessingError("Payment successful but order creation failed. Please contact support.");
+          }
+          setIsProcessing(false);
+        },
+        (error) => {
+          console.error("Payment failed:", error);
+          setProcessingError("Payment processing failed. Please try again.");
+          toast.error('Payment failed');
+          setIsProcessing(false);
+        }
       );
-      
-      console.log("Order creation result:", orderId);
-      
-      if (orderId) {
-        console.log("Order placed successfully with ID:", orderId);
-        toast.success('Order placed successfully!');
-        clearCart();
-        // Redirect to order confirmation with order ID
-        navigate(`/order-confirmation?id=${orderId}`);
-      } else {
-        console.error("Failed to create order - no order ID returned");
-        setProcessingError("Failed to create your order. Please try again.");
-        toast.error('Failed to create order');
-      }
     } catch (error) {
       console.error("Error processing payment:", error);
-      setProcessingError("Payment processing failed. Please try again.");
+      setProcessingError(`Payment processing error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       toast.error('Payment processing failed');
-    } finally {
       setIsProcessing(false);
     }
   };
@@ -494,7 +523,7 @@ const Cart = () => {
                     <div className="flex items-center mt-2">
                       <CreditCard className="h-5 w-5 text-gray-400 mr-2" />
                       <p className="text-xs text-gray-500">
-                        Your payment info is secure and will not be stored on our servers
+                        Your payment details are processed securely by Razorpay
                       </p>
                     </div>
                     

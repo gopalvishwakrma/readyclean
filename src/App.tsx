@@ -13,6 +13,7 @@ import BooksList from "./pages/BooksList";
 import BookDetail from "./pages/BookDetail";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
 import Cart from "./pages/Cart";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import MyRentals from "./pages/MyRentals";
@@ -40,6 +41,7 @@ const App = () => (
               <Route path="/search" element={<Search />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/cart" element={<Cart />} />
               
               {/* User Routes */}

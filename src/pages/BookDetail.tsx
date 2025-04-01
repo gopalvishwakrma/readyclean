@@ -22,7 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Star, ShoppingCart } from 'lucide-react';
+import { Star, ShoppingCart, IndianRupee } from 'lucide-react';
+import { convertToINR, formatINR } from '@/lib/paymentService';
 
 const BookDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -106,6 +107,10 @@ const BookDetail = () => {
       </Layout>
     );
   }
+  
+  // Calculate INR price
+  const inrPricePerWeek = convertToINR(book.price);
+  const totalInrPrice = inrPricePerWeek * parseInt(rentalDays) / 7;
 
   return (
     <Layout>
@@ -190,11 +195,12 @@ const BookDetail = () => {
                   </div>
                   <div>
                     <p className="text-sm text-gray-500 mb-1">Price</p>
-                    <p className="text-2xl font-bold">
-                      ${book.price * parseInt(rentalDays) / 7}
+                    <p className="text-2xl font-bold flex items-center">
+                      <IndianRupee className="h-5 w-5 mr-1" />
+                      {formatINR(totalInrPrice).replace("₹", "")}
                     </p>
-                    <p className="text-xs text-gray-500">
-                      (${book.price}/week × {parseInt(rentalDays)/7} weeks)
+                    <p className="text-xs text-gray-500 flex items-center">
+                      (<IndianRupee className="h-3 w-3 mr-1" />{formatINR(inrPricePerWeek).replace("₹", "")}/week × {parseInt(rentalDays)/7} weeks)
                     </p>
                   </div>
                 </div>

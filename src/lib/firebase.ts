@@ -29,6 +29,9 @@ if (process.env.NODE_ENV !== 'production') {
   console.log('Firebase initialized with config:', firebaseConfig);
 }
 
+// Currency configuration
+export const DEFAULT_CURRENCY = "INR";
+
 export { 
   auth, 
   db, 

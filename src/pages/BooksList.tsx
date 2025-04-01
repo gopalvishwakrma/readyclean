@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
@@ -15,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { formatINR } from '@/lib/paymentService';
 
 const categoryOptions = [
   { label: 'All Categories', value: 'all' },
@@ -59,7 +59,6 @@ const BooksList = () => {
           results = await searchBooks('popular books', 40);
         }
         
-        // Apply sorting
         if (filter.sortBy === 'price-low') {
           results.sort((a, b) => a.price - b.price);
         } else if (filter.sortBy === 'price-high') {
@@ -80,7 +79,6 @@ const BooksList = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Update URL parameters for shareable links
     const params = new URLSearchParams();
     if (searchQuery) params.set('q', searchQuery);
     if (category !== 'all') params.set('category', category);
@@ -95,7 +93,6 @@ const BooksList = () => {
   const handleCategoryChange = (value: string) => {
     setCategory(value);
     
-    // Update URL
     const params = new URLSearchParams(location.search);
     if (value === 'all') {
       params.delete('category');
@@ -127,7 +124,6 @@ const BooksList = () => {
       
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Filters sidebar */}
           <div className="lg:w-72 space-y-6">
             <div className="bg-white p-6 border rounded-lg shadow-sm">
               <h3 className="font-medium mb-4">Search & Filters</h3>
@@ -198,7 +194,6 @@ const BooksList = () => {
             </div>
           </div>
           
-          {/* Main content */}
           <div className="lg:flex-1">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold">

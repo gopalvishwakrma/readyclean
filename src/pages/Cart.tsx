@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
@@ -21,10 +22,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Trash2, ShoppingBag, CreditCard } from 'lucide-react';
+import { Trash2, ShoppingBag, CreditCard, IndianRupee } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { createOrder } from '@/lib/orderService';
-import { loadRazorpayScript, initiateRazorpayPayment } from '@/lib/paymentService';
+import { loadRazorpayScript, initiateRazorpayPayment, formatINR } from '@/lib/paymentService';
 import { v4 as uuidv4 } from 'uuid';
 
 const Cart = () => {
@@ -38,7 +39,7 @@ const Cart = () => {
     city: '',
     state: '',
     zipCode: '',
-    country: 'United States',
+    country: 'India',
   });
   const [paymentInfo, setPaymentInfo] = useState({
     cardName: '',
@@ -265,8 +266,9 @@ const Cart = () => {
                                 </SelectContent>
                               </Select>
                             </div>
-                            <div className="text-sm font-medium">
-                              ${(item.book.price * item.rentalDays / 7).toFixed(2)}
+                            <div className="text-sm font-medium flex items-center">
+                              <IndianRupee className="h-3 w-3 mr-1" />
+                              {formatINR(item.book.price * item.rentalDays / 7).replace("₹", "")}
                             </div>
                           </div>
                         </div>
@@ -286,7 +288,10 @@ const Cart = () => {
                   <div className="space-y-4">
                     <div className="flex justify-between">
                       <span>Subtotal</span>
-                      <span>${totalAmount.toFixed(2)}</span>
+                      <span className="flex items-center">
+                        <IndianRupee className="h-3 w-3 mr-1" />
+                        {formatINR(totalAmount).replace("₹", "")}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Shipping</span>
@@ -294,7 +299,10 @@ const Cart = () => {
                     </div>
                     <div className="flex justify-between border-t pt-4">
                       <span className="font-bold">Total</span>
-                      <span className="font-bold">${totalAmount.toFixed(2)}</span>
+                      <span className="font-bold flex items-center">
+                        <IndianRupee className="h-3 w-3 mr-1" />
+                        {formatINR(totalAmount).replace("₹", "")}
+                      </span>
                     </div>
                   </div>
                 </CardContent>

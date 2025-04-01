@@ -1,5 +1,5 @@
 
-import { db, collection, doc, getDoc, getDocs, updateDoc, query, where, addDoc, serverTimestamp } from "./firebase";
+import { db, collection, doc, getDoc, getDocs, updateDoc, query, where, addDoc, serverTimestamp, DEFAULT_CURRENCY } from "./firebase";
 import { Order, RentedBook } from "../types";
 import { toast } from "./toast";
 
@@ -132,7 +132,7 @@ export const createOrder = async (
       createdAt: serverTimestamp(),
       returnDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // Default 30 days return date
       paymentDetails: paymentDetails || null,
-      currency: "INR" // Add currency field set to INR
+      currency: DEFAULT_CURRENCY // Use INR as the currency
     };
     
     console.log("Order data prepared:", orderData);

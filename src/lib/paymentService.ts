@@ -1,11 +1,15 @@
 
 import { toast } from "./toast";
+import { IndianRupee } from "lucide-react";
 
 declare global {
   interface Window {
     Razorpay: any;
   }
 }
+
+// Razorpay credentials
+const RAZORPAY_KEY_ID = "rzp_test_y2F84038a9FYwq";
 
 // Load the Razorpay script
 export const loadRazorpayScript = (): Promise<boolean> => {
@@ -38,9 +42,9 @@ export const initiateRazorpayPayment = (
   onFailure: (error: any) => void
 ): void => {
   const options = {
-    key: "rzp_test_y2F84038a9FYwq", // Using the provided test key
-    amount: amount * 100, // Amount in smallest currency unit (paise for INR)
-    currency: "INR",      // Changed to INR from USD
+    key: RAZORPAY_KEY_ID,
+    amount: Math.round(amount * 100), // Amount in smallest currency unit (paise for INR)
+    currency: "INR",
     name: "BookHaven",
     description: "Book Rental Payment",
     image: "/placeholder.svg", // Your logo
@@ -57,6 +61,7 @@ export const initiateRazorpayPayment = (
     prefill: {
       name: userName,
       email: userEmail,
+      contact: "", // You can add phone number here if available
     },
     notes: {
       order_id: orderId,
@@ -80,4 +85,18 @@ export const initiateRazorpayPayment = (
     console.error("Error in Razorpay initialization:", error);
     onFailure(error);
   }
+};
+
+// Exchange rate: 1 USD = 83 INR (approx)
+// This would ideally come from an API but for demonstration using a fixed rate
+export const USD_TO_INR_RATE = 83;
+
+// Helper function to convert USD to INR
+export const convertToINR = (usdPrice: number): number => {
+  return Math.round(usdPrice * USD_TO_INR_RATE);
+};
+
+// Format INR price with ₹ symbol
+export const formatINR = (price: number): string => {
+  return `₹${price.toLocaleString('en-IN')}`;
 };

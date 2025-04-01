@@ -3,11 +3,12 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, AlertCircle } from 'lucide-react';
+import { CheckCircle, AlertCircle, IndianRupee } from 'lucide-react';
 import { Order } from '@/types';
 import { getOrderById } from '@/lib/orderService';
 import { toast } from '@/lib/toast';
 import { useAuth } from '@/context/AuthContext';
+import { formatINR } from '@/lib/paymentService';
 
 const OrderConfirmation = () => {
   const navigate = useNavigate();
@@ -147,7 +148,7 @@ const OrderConfirmation = () => {
             <div>
               <h3 className="font-medium mb-3">Payment Method</h3>
               <p className="text-gray-700">
-                Credit Card (ending in ****1234)
+                Credit Card (Razorpay)
               </p>
             </div>
             
@@ -157,12 +158,18 @@ const OrderConfirmation = () => {
                 {order.books.map((book, index) => (
                   <div key={index} className="flex justify-between">
                     <span>{book.title} ({book.rentalDays} days)</span>
-                    <span>${book.totalPrice.toFixed(2)}</span>
+                    <span className="flex items-center">
+                      <IndianRupee className="h-3 w-3 mr-1" />
+                      {formatINR(book.totalPrice).replace("₹", "")}
+                    </span>
                   </div>
                 ))}
                 <div className="border-t pt-2 font-bold flex justify-between">
                   <span>Total</span>
-                  <span>${order.totalAmount.toFixed(2)}</span>
+                  <span className="flex items-center">
+                    <IndianRupee className="h-3 w-3 mr-1" />
+                    {formatINR(order.totalAmount).replace("₹", "")}
+                  </span>
                 </div>
               </div>
             </div>

@@ -16,9 +16,10 @@ import {
 } from "@/components/ui/table";
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Download, Eye, Search } from 'lucide-react';
+import { Download, Eye, IndianRupee, Search } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { Input } from '@/components/ui/input';
+import { formatINR } from '@/lib/paymentService';
 
 const OrdersManagement = () => {
   const navigate = useNavigate();
@@ -32,7 +33,9 @@ const OrdersManagement = () => {
   const fetchOrders = async () => {
     try {
       setIsLoading(true);
+      console.log("Fetching all orders for admin panel");
       const allOrders = await getAllOrders();
+      console.log(`Retrieved ${allOrders.length} orders`);
       setOrders(allOrders);
       setFilteredOrders(allOrders);
     } catch (error) {
@@ -86,14 +89,13 @@ const OrdersManagement = () => {
   };
 
   const handleViewOrderDetails = (orderId: string) => {
-    // In a real application, this would navigate to a detailed view of the order
-    toast.info("Viewing order details");
-    console.log("View order:", orderId);
+    // Navigate to order details page
+    navigate(`/admin/orders/${orderId}`);
   };
 
   const handleExportOrders = () => {
     // Create CSV content
-    const headers = ['Order ID', 'Customer', 'Email', 'Date', 'Status', 'Amount'];
+    const headers = ['Order ID', 'Customer', 'Email', 'Date', 'Status', 'Amount (₹)'];
     const rows = filteredOrders.map(order => [
       order.id,
       order.userName || 'Unknown',
@@ -231,7 +233,12 @@ const OrdersManagement = () => {
                             {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                           </span>
                         </TableCell>
-                        <TableCell>${order.totalAmount.toFixed(2)}</TableCell>
+                        <TableCell>
+                          <span className="flex items-center">
+                            <IndianRupee className="h-3 w-3 mr-1" />
+                            {formatINR(order.totalAmount).replace("₹", "")}
+                          </span>
+                        </TableCell>
                         <TableCell>
                           <Select 
                             value={order.status} 

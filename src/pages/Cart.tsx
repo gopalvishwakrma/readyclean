@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
@@ -79,12 +78,6 @@ const Cart = () => {
   const handlePaymentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!paymentInfo.cardName || !paymentInfo.cardNumber || 
-        !paymentInfo.expiryDate || !paymentInfo.cvv) {
-      toast.error('Please fill in all payment details');
-      return;
-    }
-
     if (!currentUser) {
       toast.error('Please login to complete your purchase');
       navigate('/login');
@@ -123,39 +116,45 @@ const Cart = () => {
         throw new Error("Failed to load payment gateway");
       }
       
-      // Initialize Razorpay payment
+      // Initialize Razorpay payment - using direct integration without server-generated order ID
       initiateRazorpayPayment(
         clientOrderId,
         totalAmount,
         currentUser.email || '',
         shippingInfo.fullName,
         async (paymentId, orderId, signature) => {
-          console.log("Payment successful, creating order in database");
+          console.log("Payment successful with payment ID:", paymentId);
           // After successful payment, create order in database
-          const firestoreOrderId = await createOrder(
-            currentUser.uid,
-            currentUser.email || '',
-            shippingInfo.fullName,
-            rentedBooks,
-            totalAmount,
-            formattedAddress,
-            {
-              paymentId,
-              orderId,
-              signature
+          try {
+            const firestoreOrderId = await createOrder(
+              currentUser.uid,
+              currentUser.email || '',
+              shippingInfo.fullName,
+              rentedBooks,
+              totalAmount,
+              formattedAddress,
+              {
+                paymentId,
+                orderId,
+                signature
+              }
+            );
+            
+            if (firestoreOrderId) {
+              console.log("Order created successfully with ID:", firestoreOrderId);
+              toast.success('Order placed successfully!');
+              clearCart();
+              navigate(`/order-confirmation?id=${firestoreOrderId}`);
+            } else {
+              console.error("Failed to create order in database");
+              setProcessingError("Payment successful but order creation failed. Please contact support.");
             }
-          );
-          
-          if (firestoreOrderId) {
-            console.log("Order created successfully with ID:", firestoreOrderId);
-            toast.success('Order placed successfully!');
-            clearCart();
-            navigate(`/order-confirmation?id=${firestoreOrderId}`);
-          } else {
-            console.error("Failed to create order in database");
-            setProcessingError("Payment successful but order creation failed. Please contact support.");
+          } catch (err) {
+            console.error("Error creating order:", err);
+            setProcessingError("Error saving order details. Please contact support.");
+          } finally {
+            setIsProcessing(false);
           }
-          setIsProcessing(false);
         },
         (error) => {
           console.error("Payment failed:", error);
@@ -399,10 +398,10 @@ const Cart = () => {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
+                            <SelectItem value="India">India</SelectItem>
                             <SelectItem value="United States">United States</SelectItem>
                             <SelectItem value="Canada">Canada</SelectItem>
                             <SelectItem value="United Kingdom">United Kingdom</SelectItem>
-                            {/* Add more countries as needed */}
                           </SelectContent>
                         </Select>
                       </div>
@@ -437,14 +436,20 @@ const Cart = () => {
                           <span className="truncate max-w-[180px]">
                             {item.book.title} ({item.rentalDays} days)
                           </span>
-                          <span>${(item.book.price * item.rentalDays / 7).toFixed(2)}</span>
+                          <span className="flex items-center">
+                            <IndianRupee className="h-3 w-3 mr-1" />
+                            {formatINR(item.book.price * item.rentalDays / 7).replace("₹", "")}
+                          </span>
                         </div>
                       ))}
                     </div>
                     <div className="border-t pt-4 space-y-2">
                       <div className="flex justify-between">
                         <span>Subtotal</span>
-                        <span>${totalAmount.toFixed(2)}</span>
+                        <span className="flex items-center">
+                          <IndianRupee className="h-3 w-3 mr-1" />
+                          {formatINR(totalAmount).replace("₹", "")}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span>Shipping</span>
@@ -452,7 +457,10 @@ const Cart = () => {
                       </div>
                       <div className="flex justify-between border-t pt-4">
                         <span className="font-bold">Total</span>
-                        <span className="font-bold">${totalAmount.toFixed(2)}</span>
+                        <span className="font-bold flex items-center">
+                          <IndianRupee className="h-3 w-3 mr-1" />
+                          {formatINR(totalAmount).replace("₹", "")}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -469,86 +477,43 @@ const Cart = () => {
                 <CardHeader>
                   <CardTitle>Payment Details</CardTitle>
                   <CardDescription>
-                    Enter your payment information to complete your order
+                    Your payment will be processed securely via Razorpay
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <form onSubmit={handlePaymentSubmit} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="cardName">Name on Card</Label>
-                      <Input
-                        id="cardName"
-                        name="cardName"
-                        value={paymentInfo.cardName}
-                        onChange={handlePaymentInfoChange}
-                        required
-                      />
+                  {processingError && (
+                    <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded mb-4">
+                      {processingError}
                     </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="cardNumber">Card Number</Label>
-                      <Input
-                        id="cardNumber"
-                        name="cardNumber"
-                        value={paymentInfo.cardNumber}
-                        onChange={handlePaymentInfoChange}
-                        placeholder="1234 5678 9012 3456"
-                        required
-                      />
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="expiryDate">Expiry Date</Label>
-                        <Input
-                          id="expiryDate"
-                          name="expiryDate"
-                          value={paymentInfo.expiryDate}
-                          onChange={handlePaymentInfoChange}
-                          placeholder="MM/YY"
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="cvv">CVV</Label>
-                        <Input
-                          id="cvv"
-                          name="cvv"
-                          value={paymentInfo.cvv}
-                          onChange={handlePaymentInfoChange}
-                          placeholder="123"
-                          required
-                        />
-                      </div>
-                    </div>
-                    
-                    {processingError && (
-                      <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded">
-                        {processingError}
-                      </div>
-                    )}
-                    
-                    <div className="flex items-center mt-2">
-                      <CreditCard className="h-5 w-5 text-gray-400 mr-2" />
-                      <p className="text-xs text-gray-500">
-                        Your payment details are processed securely by Razorpay
-                      </p>
-                    </div>
-                    
-                    <div className="flex justify-end space-x-4 pt-4">
-                      <Button 
-                        type="button" 
-                        variant="outline"
-                        onClick={() => setCheckoutStep('shipping')}
-                        disabled={isProcessing}
-                      >
-                        Back to Shipping
-                      </Button>
-                      <Button type="submit" disabled={isProcessing}>
-                        {isProcessing ? 'Processing...' : 'Place Order'}
-                      </Button>
-                    </div>
-                  </form>
+                  )}
+                  
+                  <div className="bg-blue-50 border border-blue-200 text-blue-700 p-3 rounded mb-4">
+                    <p className="text-sm">
+                      <strong>Test Card Information:</strong><br />
+                      Card Number: 4111 1111 1111 1111<br />
+                      Expiry: Any future date<br />
+                      CVV: Any 3 digits<br />
+                      Name: Any name<br />
+                    </p>
+                  </div>
+                  
+                  <div className="flex justify-end space-x-4 pt-4">
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      onClick={() => setCheckoutStep('shipping')}
+                      disabled={isProcessing}
+                    >
+                      Back to Shipping
+                    </Button>
+                    <Button 
+                      type="button" 
+                      onClick={handlePaymentSubmit} 
+                      disabled={isProcessing}
+                    >
+                      {isProcessing ? 'Processing...' : 'Pay Now'}
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -565,14 +530,20 @@ const Cart = () => {
                           <span className="truncate max-w-[180px]">
                             {item.book.title} ({item.rentalDays} days)
                           </span>
-                          <span>${(item.book.price * item.rentalDays / 7).toFixed(2)}</span>
+                          <span className="flex items-center">
+                            <IndianRupee className="h-3 w-3 mr-1" />
+                            {formatINR(item.book.price * item.rentalDays / 7).replace("₹", "")}
+                          </span>
                         </div>
                       ))}
                     </div>
                     <div className="border-t pt-4 space-y-2">
                       <div className="flex justify-between">
                         <span>Subtotal</span>
-                        <span>${totalAmount.toFixed(2)}</span>
+                        <span className="flex items-center">
+                          <IndianRupee className="h-3 w-3 mr-1" />
+                          {formatINR(totalAmount).replace("₹", "")}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span>Shipping</span>
@@ -580,7 +551,10 @@ const Cart = () => {
                       </div>
                       <div className="flex justify-between border-t pt-4">
                         <span className="font-bold">Total</span>
-                        <span className="font-bold">${totalAmount.toFixed(2)}</span>
+                        <span className="font-bold flex items-center">
+                          <IndianRupee className="h-3 w-3 mr-1" />
+                          {formatINR(totalAmount).replace("₹", "")}
+                        </span>
                       </div>
                     </div>
                   </div>

@@ -48,12 +48,12 @@ export const initiateRazorpayPayment = (
     name: "BookHaven",
     description: "Book Rental Payment",
     image: "/placeholder.svg", // Your logo
-    order_id: orderId, // This is for server-generated orders (if applicable)
+    order_id: orderId, // This is optional for client-side generated orders
     handler: function (response: any) {
       console.log("Payment successful:", response);
       // Call success callback with payment details
       onSuccess(
-        response.razorpay_payment_id,
+        response.razorpay_payment_id || "client-generated",
         response.razorpay_order_id || orderId,
         response.razorpay_signature || "client-generated"
       );

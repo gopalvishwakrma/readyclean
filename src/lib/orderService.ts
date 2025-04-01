@@ -6,13 +6,17 @@ import { toast } from "./toast";
 // Fetch all orders (for admin)
 export const getAllOrders = async (): Promise<Order[]> => {
   try {
+    console.log("Fetching all orders for admin panel");
     const ordersRef = collection(db, "orders");
     const snapshot = await getDocs(ordersRef);
     
-    return snapshot.docs.map(doc => ({
+    const orders = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     })) as Order[];
+    
+    console.log(`Retrieved ${orders.length} orders from Firestore`);
+    return orders;
   } catch (error) {
     console.error("Error fetching orders:", error);
     toast.error("Failed to fetch orders");
@@ -32,7 +36,7 @@ export const getUserOrders = async (userId: string): Promise<Order[]> => {
       ...doc.data()
     })) as Order[];
     
-    console.log(`Found ${orders.length} orders for user ${userId}:`, orders);
+    console.log(`Found ${orders.length} orders for user ${userId}`);
     return orders;
   } catch (error) {
     console.error("Error fetching user orders:", error);
@@ -70,6 +74,7 @@ export const getOrderById = async (orderId: string): Promise<Order | null> => {
 // Update order status (for admin)
 export const updateOrderStatus = async (orderId: string, status: Order["status"]): Promise<boolean> => {
   try {
+    console.log(`Updating order ${orderId} status to ${status}`);
     await updateDoc(doc(db, "orders", orderId), { 
       status,
       updatedAt: serverTimestamp()
@@ -119,7 +124,7 @@ export const createOrder = async (
       throw new Error("No books selected");
     }
     
-    // Create the order data
+    // Create the order data with timestamp that will work in Firestore
     const orderData = {
       userId,
       userEmail,
@@ -130,7 +135,8 @@ export const createOrder = async (
       deliveryAddress,
       paymentStatus: "completed",
       createdAt: serverTimestamp(),
-      returnDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // Default 30 days return date
+      updatedAt: serverTimestamp(),
+      returnDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // Use ISO string for date
       paymentDetails: paymentDetails || null,
       currency: DEFAULT_CURRENCY // Use INR as the currency
     };
